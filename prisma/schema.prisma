@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id       Int      @id @default(autoincrement())
+  nome     String
+  email    String   @unique
+  senha    String
+  tipo     String   // admin, editor
+  criadoEm DateTime @default(now())
+}
+
+model Noticia {
+  id       Int      @id @default(autoincrement())
+  titulo   String
+  resumo   String
+  conteudo String?
+  imagem   String?
+  criadoEm DateTime @default(now())
+}
+
+model Licitacao {
+  id         Int      @id @default(autoincrement())
+  titulo     String
+  modalidade String
+  status     String     // Aberta | Encerrada | Em andamento
+  data       DateTime
+  arquivo    String?
+  criadoEm   DateTime   @default(now())
+}
+
+model DocumentoTransparencia {
+  id       Int      @id @default(autoincrement())
+  titulo   String
+  tipo     String    // Despesa | Receita | Relatorio | Contrato etc.
+  data     DateTime
+  arquivo  String?
+  criadoEm DateTime  @default(now())
+}
