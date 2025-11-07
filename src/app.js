@@ -20,7 +20,6 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // Rotas
 app.use("/api/noticias", noticiaRoutes);
-app.use("/api/licitacoes", licitacaoRoutes);
 app.use("/api/transparencia", transparenciaRoutes);
 app.use("/api/usuarios", usuarioRoutes);
 
