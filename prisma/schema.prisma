@@ -12,7 +12,7 @@ model Usuario {
   nome     String
   email    String   @unique
   senha    String
-  tipo     String   // admin, editor
+  tipo     String
   criadoEm DateTime @default(now())
 }
 
@@ -25,21 +25,21 @@ model Noticia {
   criadoEm DateTime @default(now())
 }
 
+model DocumentoTransparencia {
+  id       Int      @id @default(autoincrement())
+  titulo   String
+  tipo     String
+  data     DateTime
+  arquivo  String?
+  criadoEm DateTime @default(now())
+}
+
 model Licitacao {
   id         Int      @id @default(autoincrement())
   titulo     String
   modalidade String
-  status     String     // Aberta | Encerrada | Em andamento
+  status     String
   data       DateTime
   arquivo    String?
-  criadoEm   DateTime   @default(now())
-}
-
-model DocumentoTransparencia {
-  id       Int      @id @default(autoincrement())
-  titulo   String
-  tipo     String    // Despesa | Receita | Relatorio | Contrato etc.
-  data     DateTime
-  arquivo  String?
-  criadoEm DateTime  @default(now())
+  criadoEm   DateTime @default(now())
 }
