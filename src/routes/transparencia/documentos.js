@@ -1,8 +1,7 @@
-// src/routes/transparencia/index.js
+// src/routes/transparencia/documentos.js
 import express from "express";
 import upload from "../../utils/upload.js";
 import { auth } from "../../middleware/auth.js";
-
 import {
   getTransparencia,
   getDocumento,
@@ -11,19 +10,9 @@ import {
   deleteTransparencia,
 } from "../../controllers/transparencia/transparenciaController.js";
 
-import licitacoesRoutes from "./licitacoes.js";
-import documentosRoutes from "./documentos.js";
-
 const router = express.Router();
 
-/**
- * ✅ Subrotas PRIMEIRO (antes de /:id)
- * Assim /documentos não cai no /:id
- */
-router.use("/licitacoes", licitacoesRoutes);
-router.use("/documentos", documentosRoutes);
-
-// Rotas principais de transparência
+// Mesma lógica do módulo Transparência, mas em /documentos
 router.get("/", getTransparencia);
 router.get("/:id", getDocumento);
 router.post("/", auth, upload.single("arquivo"), postTransparencia);
