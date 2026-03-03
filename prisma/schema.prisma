@@ -22,6 +22,7 @@ model Noticia {
   resumo   String
   conteudo String?
   imagem   String?
+  comentarios String?
   criadoEm DateTime @default(now())
 }
 
@@ -31,6 +32,7 @@ model DocumentoTransparencia {
   tipo     String
   data     DateTime
   arquivo  String?
+  comentarios String?
   criadoEm DateTime @default(now())
 }
 
@@ -41,5 +43,6 @@ model Licitacao {
   status     String
   data       DateTime
   arquivo    String?
+  comentarios String?
   criadoEm   DateTime @default(now())
 }

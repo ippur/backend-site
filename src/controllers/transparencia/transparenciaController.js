@@ -41,11 +41,11 @@ export const getDocumento = async (req, res) => {
 /** POST /api/transparencia (multipart com campo 'arquivo') */
 export const postTransparencia = async (req, res) => {
   try {
-    const { titulo, tipo, data } = req.body;
+    const { titulo, tipo, data, comentarios } = req.body;
     const arquivo = req.file ? `/uploads/${req.file.filename}` : null;
 
     const novoDoc = await prisma.documentoTransparencia.create({
-      data: { titulo, tipo, data: new Date(data), arquivo },
+      data: { titulo, tipo, data: new Date(data), arquivo, comentarios },
     });
 
     res.json(novoDoc);
@@ -59,12 +59,12 @@ export const postTransparencia = async (req, res) => {
 export const putTransparencia = async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const { titulo, tipo, data } = req.body;
+    const { titulo, tipo, data, comentarios } = req.body;
     const arquivo = req.file ? `/uploads/${req.file.filename}` : undefined;
 
     const atualizado = await prisma.documentoTransparencia.update({
       where: { id },
-      data: { titulo, tipo, data: new Date(data), ...(arquivo ? { arquivo } : {}) },
+      data: { titulo, tipo, data: new Date(data), comentarios, ...(arquivo ? { arquivo } : {}) },
     });
 
     res.json(atualizado);

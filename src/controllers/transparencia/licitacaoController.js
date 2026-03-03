@@ -38,7 +38,7 @@ export const getLicitacao = async (req, res) => {
  */
 export const postLicitacao = async (req, res) => {
   try {
-    const { titulo, modalidade, status, data } = req.body;
+    const { titulo, modalidade, status, data, comentarios } = req.body;
     const arquivo = req.file ? `/uploads/${req.file.filename}` : null;
 
     const item = await prisma.licitacao.create({
@@ -48,6 +48,7 @@ export const postLicitacao = async (req, res) => {
         status,
         data: new Date(data),
         arquivo,
+        comentarios,
       },
     });
 
@@ -65,7 +66,7 @@ export const putLicitacao = async (req, res) => {
   const id = Number(req.params.id);
 
   try {
-    const { titulo, modalidade, status, data } = req.body;
+    const { titulo, modalidade, status, data, comentarios } = req.body;
     const arquivo = req.file ? `/uploads/${req.file.filename}` : undefined;
 
     const item = await prisma.licitacao.update({
@@ -74,6 +75,7 @@ export const putLicitacao = async (req, res) => {
         titulo,
         modalidade,
         status,
+        comentarios,
         ...(data ? { data: new Date(data) } : {}),
         ...(arquivo !== undefined ? { arquivo } : {}),
       },
