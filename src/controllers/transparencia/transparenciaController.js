@@ -1,5 +1,8 @@
 // src/controllers/transparencia/transparenciaController.js
 import { PrismaClient } from "@prisma/client";
+import { supabase, BUCKET } from "../../utils/supabase.js";
+import fs from "fs";
+import path from "path";
 const prisma = new PrismaClient();
 
 /**
@@ -42,16 +45,49 @@ export const getDocumento = async (req, res) => {
 export const postTransparencia = async (req, res) => {
   try {
     const { titulo, tipo, data, comentarios } = req.body;
-    const arquivo = req.file ? `/uploads/${req.file.filename}` : null;
+
+    let arquivo = null;
+
+    if (req.file) {
+      const filePath = req.file.path;
+      const fileBuffer = fs.readFileSync(filePath);
+
+      const fileName = `${Date.now()}-${req.file.originalname}`;
+
+      const { error } = await supabase.storage
+        .from(BUCKET)
+        .upload(fileName, fileBuffer, {
+          contentType: req.file.mimetype,
+        });
+
+      if (error) {
+        console.error(error);
+        return res.status(500).json({ error: "Erro ao enviar arquivo para storage" });
+      }
+
+      const { data: url } = supabase.storage
+        .from(BUCKET)
+        .getPublicUrl(fileName);
+
+      arquivo = url.publicUrl;
+
+      fs.unlinkSync(filePath); // remove arquivo temporário
+    }
 
     const novoDoc = await prisma.documentoTransparencia.create({
-      data: { titulo, tipo, data: new Date(data), arquivo, comentarios },
+      data: {
+        titulo,
+        tipo,
+        data: new Date(data),
+        comentarios,
+        arquivo,
+      },
     });
 
     res.json(novoDoc);
   } catch (error) {
     console.error("Erro ao criar documento:", error);
-    res.status(500).json({ error: "Erro ao criar documento de transparência" });
+    res.status(500).json({ error: "Erro ao criar documento" });
   }
 };
 
