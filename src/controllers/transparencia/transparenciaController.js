@@ -81,6 +81,11 @@ export const getDocumento = async (req, res) => {
 /** POST /api/transparencia (multipart com campo 'arquivo') */
 export const postTransparencia = async (req, res) => {
   try {
+
+    // 🔍 TESTE PARA SABER SE ESTE CONTROLLER ESTÁ SENDO EXECUTADO
+    console.log("=== CONTROLLER NOVO DE TRANSPARENCIA ATIVO ===");
+    console.log("REQ.FILE =", req.file);
+
     const { titulo, tipo, data, comentarios } = req.body;
 
     let arquivo = null;

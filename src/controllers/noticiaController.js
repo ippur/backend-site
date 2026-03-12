@@ -86,6 +86,11 @@ export const getNoticia = async (req, res) => {
 // POST /noticias — cria nova
 export const postNoticia = async (req, res) => {
   try {
+
+    // 🔍 TESTE PARA SABER SE ESTE CONTROLLER ESTÁ SENDO EXECUTADO
+    console.log("=== CONTROLLER NOVO DE NOTICIA ATIVO ===");
+    console.log("REQ.FILE =", req.file);
+
     const { titulo, resumo, conteudo } = req.body;
 
     let imagem = null;

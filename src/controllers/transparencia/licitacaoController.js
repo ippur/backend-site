@@ -77,6 +77,11 @@ export const getLicitacao = async (req, res) => {
  */
 export const postLicitacao = async (req, res) => {
   try {
+
+    // 🔍 TESTE PARA SABER SE ESTE CONTROLLER ESTÁ SENDO EXECUTADO
+    console.log("=== CONTROLLER NOVO DE LICITACAO ATIVO ===");
+    console.log("REQ.FILE =", req.file);
+    
     const { titulo, modalidade, status, data, comentarios } = req.body;
 
     let arquivo = null;
