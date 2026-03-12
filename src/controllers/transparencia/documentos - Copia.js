@@ -1,0 +1,20 @@
+import express from "express";
+import upload from "../../utils/upload.js";
+import { auth } from "../../middleware/auth.js";
+import {
+  getTransparencia,
+  getDocumento,
+  postTransparencia,
+  putTransparencia,
+  deleteTransparencia,
+} from "../../controllers/transparencia/transparenciaController.js";
+
+const router = express.Router();
+
+router.get("/", getTransparencia);
+router.get("/:id", getDocumento);
+router.post("/", auth, upload.single("arquivo"), postTransparencia);
+router.put("/:id", auth, upload.single("arquivo"), putTransparencia);
+router.delete("/:id", auth, deleteTransparencia);
+
+export default router;
