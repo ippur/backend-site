@@ -104,7 +104,11 @@ export const postTransparencia = async (req, res) => {
       },
     });
 
-    res.json(novoDoc);
+    res.json({
+      debug: "CONTROLLER NOVO ATIVO",
+      novoDoc,
+    });
+    
   } catch (error) {
     console.error("Erro ao criar documento:", error);
     res.status(500).json({ error: "Erro ao criar documento" });
