@@ -1,6 +1,7 @@
 // src/controllers/transparencia/transparenciaController.js
 import { PrismaClient } from "@prisma/client";
 import { supabase, BUCKET } from "../../utils/supabase.js";
+import { removerArquivoDoSupabase } from "../../utils/supabaseStorage.js";
 
 const prisma = new PrismaClient();
 
@@ -104,11 +105,7 @@ export const postTransparencia = async (req, res) => {
       },
     });
 
-    res.json({
-      debug: "CONTROLLER NOVO ATIVO",
-      novoDoc,
-    });
-    
+    res.json(novoDoc);
   } catch (error) {
     console.error("Erro ao criar documento:", error);
     res.status(500).json({ error: "Erro ao criar documento" });
@@ -149,6 +146,19 @@ export const putTransparencia = async (req, res) => {
 export const deleteTransparencia = async (req, res) => {
   try {
     const id = Number(req.params.id);
+
+    const documento = await prisma.documentoTransparencia.findUnique({
+      where: { id },
+    });
+
+    if (!documento) {
+      return res.status(404).json({ error: "Documento não encontrado" });
+    }
+
+    // Tenta remover o arquivo do Supabase antes de excluir o registro
+    if (documento.arquivo) {
+      await removerArquivoDoSupabase(documento.arquivo);
+    }
 
     await prisma.documentoTransparencia.delete({
       where: { id },

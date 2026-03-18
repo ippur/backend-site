@@ -1,9 +1,39 @@
 // src/controllers/transparencia/transparenciaController.js
 import { PrismaClient } from "@prisma/client";
 import { supabase, BUCKET } from "../../utils/supabase.js";
-import fs from "fs";
-import path from "path";
+
 const prisma = new PrismaClient();
+
+function sanitizeFileName(name) {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/[^a-zA-Z0-9._-]/g, "")
+    .toLowerCase();
+}
+
+async function uploadArquivoParaSupabase(file, pasta = "transparencia") {
+  if (!file) return null;
+
+  const safeName = sanitizeFileName(file.originalname);
+  const fileName = `${pasta}/${Date.now()}-${safeName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(BUCKET)
+    .upload(fileName, file.buffer, {
+      contentType: file.mimetype,
+      upsert: false,
+    });
+
+  if (uploadError) {
+    throw new Error(`Erro ao enviar arquivo para o Supabase: ${uploadError.message}`);
+  }
+
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(fileName);
+
+  return data.publicUrl;
+}
 
 /**
  * GET /api/transparencia?tipo=receita|despesa|convenio|...
@@ -32,8 +62,15 @@ export const getTransparencia = async (req, res) => {
 export const getDocumento = async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const documento = await prisma.documentoTransparencia.findUnique({ where: { id } });
-    if (!documento) return res.status(404).json({ error: "Documento não encontrado" });
+
+    const documento = await prisma.documentoTransparencia.findUnique({
+      where: { id },
+    });
+
+    if (!documento) {
+      return res.status(404).json({ error: "Documento não encontrado" });
+    }
+
     res.json(documento);
   } catch (error) {
     console.error("Erro ao buscar documento:", error);
@@ -44,34 +81,17 @@ export const getDocumento = async (req, res) => {
 /** POST /api/transparencia (multipart com campo 'arquivo') */
 export const postTransparencia = async (req, res) => {
   try {
+
+    // 🔍 TESTE PARA SABER SE ESTE CONTROLLER ESTÁ SENDO EXECUTADO
+    console.log("=== CONTROLLER NOVO DE TRANSPARENCIA ATIVO ===");
+    console.log("REQ.FILE =", req.file);
+
     const { titulo, tipo, data, comentarios } = req.body;
 
     let arquivo = null;
 
     if (req.file) {
-      const filePath = req.file.path;
-      const fileBuffer = fs.readFileSync(filePath);
-
-      const fileName = `${Date.now()}-${req.file.originalname}`;
-
-      const { error } = await supabase.storage
-        .from(BUCKET)
-        .upload(fileName, fileBuffer, {
-          contentType: req.file.mimetype,
-        });
-
-      if (error) {
-        console.error(error);
-        return res.status(500).json({ error: "Erro ao enviar arquivo para storage" });
-      }
-
-      const { data: url } = supabase.storage
-        .from(BUCKET)
-        .getPublicUrl(fileName);
-
-      arquivo = url.publicUrl;
-
-      fs.unlinkSync(filePath); // remove arquivo temporário
+      arquivo = await uploadArquivoParaSupabase(req.file, "transparencia");
     }
 
     const novoDoc = await prisma.documentoTransparencia.create({
@@ -96,11 +116,22 @@ export const putTransparencia = async (req, res) => {
   try {
     const id = Number(req.params.id);
     const { titulo, tipo, data, comentarios } = req.body;
-    const arquivo = req.file ? `/uploads/${req.file.filename}` : undefined;
+
+    let arquivo;
+
+    if (req.file) {
+      arquivo = await uploadArquivoParaSupabase(req.file, "transparencia");
+    }
 
     const atualizado = await prisma.documentoTransparencia.update({
       where: { id },
-      data: { titulo, tipo, data: new Date(data), comentarios, ...(arquivo ? { arquivo } : {}) },
+      data: {
+        titulo,
+        tipo,
+        data: new Date(data),
+        comentarios,
+        ...(arquivo ? { arquivo } : {}),
+      },
     });
 
     res.json(atualizado);
@@ -114,7 +145,11 @@ export const putTransparencia = async (req, res) => {
 export const deleteTransparencia = async (req, res) => {
   try {
     const id = Number(req.params.id);
-    await prisma.documentoTransparencia.delete({ where: { id } });
+
+    await prisma.documentoTransparencia.delete({
+      where: { id },
+    });
+
     res.json({ ok: true });
   } catch (error) {
     console.error("Erro ao deletar documento:", error);
