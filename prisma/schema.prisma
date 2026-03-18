@@ -22,7 +22,6 @@ model Noticia {
   resumo   String
   conteudo String?
   imagem   String?
-  comentarios String?
   criadoEm DateTime @default(now())
 }
 
