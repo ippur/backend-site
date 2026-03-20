@@ -17,31 +17,41 @@ model Usuario {
 }
 
 model Noticia {
-  id       Int      @id @default(autoincrement())
-  titulo   String
-  resumo   String
-  conteudo String?
-  imagem   String?
-  criadoEm DateTime @default(now())
+  id        Int             @id @default(autoincrement())
+  titulo    String
+  resumo    String
+  conteudo  String?
+  imagem    String?
+  criadoEm  DateTime        @default(now())
+  galeria   NoticiaImagem[]
+}
+
+model NoticiaImagem {
+  id        Int      @id @default(autoincrement())
+  noticiaId Int
+  url       String
+  criadoEm  DateTime @default(now())
+
+  noticia   Noticia  @relation(fields: [noticiaId], references: [id], onDelete: Cascade)
 }
 
 model DocumentoTransparencia {
-  id       Int      @id @default(autoincrement())
-  titulo   String
-  tipo     String
-  data     DateTime
-  arquivo  String?
+  id          Int      @id @default(autoincrement())
+  titulo      String
+  tipo        String
+  data        DateTime
+  arquivo     String?
   comentarios String?
-  criadoEm DateTime @default(now())
+  criadoEm    DateTime @default(now())
 }
 
 model Licitacao {
-  id         Int      @id @default(autoincrement())
-  titulo     String
-  modalidade String
-  status     String
-  data       DateTime
-  arquivo    String?
+  id          Int      @id @default(autoincrement())
+  titulo      String
+  modalidade  String
+  status      String
+  data        DateTime
+  arquivo     String?
   comentarios String?
-  criadoEm   DateTime @default(now())
+  criadoEm    DateTime @default(now())
 }
