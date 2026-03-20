@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { supabase, BUCKET } from "../utils/supabase.js";
+import { removerArquivoDoSupabase } from "../utils/supabaseStorage.js";
 
 const prisma = new PrismaClient();
 
@@ -16,7 +17,12 @@ async function uploadImagemParaSupabase(file, pasta = "noticias") {
   if (!file) return null;
 
   const safeName = sanitizeFileName(file.originalname);
-  const fileName = `${pasta}/${Date.now()}-${safeName}`;
+
+  const agora = new Date();
+  const ano = String(agora.getFullYear());
+  const mes = String(agora.getMonth() + 1).padStart(2, "0");
+
+  const fileName = `${pasta}/${ano}/${mes}/${Date.now()}-${safeName}`;
 
   const { error: uploadError } = await supabase.storage
     .from(BUCKET)
@@ -69,6 +75,14 @@ export const getNoticia = async (req, res) => {
         conteudo: true,
         imagem: true,
         criadoEm: true,
+        galeria: {
+          select: {
+            id: true,
+            url: true,
+            criadoEm: true,
+          },
+          orderBy: { criadoEm: "asc" },
+        },
       },
     });
 
@@ -86,17 +100,15 @@ export const getNoticia = async (req, res) => {
 // POST /noticias — cria nova
 export const postNoticia = async (req, res) => {
   try {
-
-    // 🔍 TESTE PARA SABER SE ESTE CONTROLLER ESTÁ SENDO EXECUTADO
-    console.log("=== CONTROLLER NOVO DE NOTICIA ATIVO ===");
-    console.log("REQ.FILE =", req.file);
-
     const { titulo, resumo, conteudo } = req.body;
+
+    const imagemCapa = req.files?.imagem?.[0] || null;
+    const imagensGaleria = req.files?.galeria || [];
 
     let imagem = null;
 
-    if (req.file) {
-      imagem = await uploadImagemParaSupabase(req.file, "noticias");
+    if (imagemCapa) {
+      imagem = await uploadImagemParaSupabase(imagemCapa, "noticias");
     }
 
     const noticia = await prisma.noticia.create({
@@ -108,7 +120,43 @@ export const postNoticia = async (req, res) => {
       },
     });
 
-    res.status(201).json(noticia);
+    if (imagensGaleria.length > 0) {
+      const urlsGaleria = [];
+
+      for (const file of imagensGaleria) {
+        const url = await uploadImagemParaSupabase(file, "noticias/galeria");
+        urlsGaleria.push(url);
+      }
+
+      await prisma.noticiaImagem.createMany({
+        data: urlsGaleria.map((url) => ({
+          noticiaId: noticia.id,
+          url,
+        })),
+      });
+    }
+
+    const noticiaCompleta = await prisma.noticia.findUnique({
+      where: { id: noticia.id },
+      select: {
+        id: true,
+        titulo: true,
+        resumo: true,
+        conteudo: true,
+        imagem: true,
+        criadoEm: true,
+        galeria: {
+          select: {
+            id: true,
+            url: true,
+            criadoEm: true,
+          },
+          orderBy: { criadoEm: "asc" },
+        },
+      },
+    });
+
+    res.status(201).json(noticiaCompleta);
   } catch (error) {
     console.error("Erro ao criar notícia:", error);
     res.status(500).json({ error: "Erro ao criar notícia" });
@@ -121,13 +169,30 @@ export const putNoticia = async (req, res) => {
     const id = Number(req.params.id);
     const { titulo, resumo, conteudo } = req.body;
 
-    let imagem;
+    const noticiaAtual = await prisma.noticia.findUnique({
+      where: { id },
+      include: { galeria: true },
+    });
 
-    if (req.file) {
-      imagem = await uploadImagemParaSupabase(req.file, "noticias");
+    if (!noticiaAtual) {
+      return res.status(404).json({ error: "Notícia não encontrada" });
     }
 
-    const noticia = await prisma.noticia.update({
+    const imagemCapa = req.files?.imagem?.[0] || null;
+    const imagensGaleria = req.files?.galeria || [];
+
+    let imagem;
+
+    if (imagemCapa) {
+      // remove capa antiga, se existir
+      if (noticiaAtual.imagem) {
+        await removerArquivoDoSupabase(noticiaAtual.imagem);
+      }
+
+      imagem = await uploadImagemParaSupabase(imagemCapa, "noticias");
+    }
+
+    await prisma.noticia.update({
       where: { id },
       data: {
         titulo,
@@ -137,7 +202,44 @@ export const putNoticia = async (req, res) => {
       },
     });
 
-    res.json(noticia);
+    // adiciona novas imagens na galeria sem apagar as antigas
+    if (imagensGaleria.length > 0) {
+      const urlsGaleria = [];
+
+      for (const file of imagensGaleria) {
+        const url = await uploadImagemParaSupabase(file, "noticias/galeria");
+        urlsGaleria.push(url);
+      }
+
+      await prisma.noticiaImagem.createMany({
+        data: urlsGaleria.map((url) => ({
+          noticiaId: id,
+          url,
+        })),
+      });
+    }
+
+    const noticiaAtualizada = await prisma.noticia.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        titulo: true,
+        resumo: true,
+        conteudo: true,
+        imagem: true,
+        criadoEm: true,
+        galeria: {
+          select: {
+            id: true,
+            url: true,
+            criadoEm: true,
+          },
+          orderBy: { criadoEm: "asc" },
+        },
+      },
+    });
+
+    res.json(noticiaAtualizada);
   } catch (error) {
     console.error("Erro ao atualizar notícia:", error);
     res.status(500).json({ error: "Erro ao atualizar notícia" });
@@ -148,6 +250,27 @@ export const putNoticia = async (req, res) => {
 export const deleteNoticia = async (req, res) => {
   try {
     const id = Number(req.params.id);
+
+    const noticia = await prisma.noticia.findUnique({
+      where: { id },
+      include: { galeria: true },
+    });
+
+    if (!noticia) {
+      return res.status(404).json({ error: "Notícia não encontrada" });
+    }
+
+    // remove imagem principal
+    if (noticia.imagem) {
+      await removerArquivoDoSupabase(noticia.imagem);
+    }
+
+    // remove imagens da galeria
+    if (noticia.galeria?.length) {
+      for (const img of noticia.galeria) {
+        await removerArquivoDoSupabase(img.url);
+      }
+    }
 
     await prisma.noticia.delete({
       where: { id },

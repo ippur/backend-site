@@ -184,7 +184,6 @@ export const putNoticia = async (req, res) => {
     let imagem;
 
     if (imagemCapa) {
-      // remove capa antiga, se existir
       if (noticiaAtual.imagem) {
         await removerArquivoDoSupabase(noticiaAtual.imagem);
       }
@@ -202,7 +201,6 @@ export const putNoticia = async (req, res) => {
       },
     });
 
-    // adiciona novas imagens na galeria sem apagar as antigas
     if (imagensGaleria.length > 0) {
       const urlsGaleria = [];
 
@@ -246,6 +244,39 @@ export const putNoticia = async (req, res) => {
   }
 };
 
+// DELETE /noticias/:id/galeria/:imagemId — exclui uma imagem da galeria
+export const deleteImagemGaleriaNoticia = async (req, res) => {
+  try {
+    const noticiaId = Number(req.params.id);
+    const imagemId = Number(req.params.imagemId);
+
+    const imagem = await prisma.noticiaImagem.findUnique({
+      where: { id: imagemId },
+    });
+
+    if (!imagem) {
+      return res.status(404).json({ error: "Imagem da galeria não encontrada" });
+    }
+
+    if (imagem.noticiaId !== noticiaId) {
+      return res.status(400).json({ error: "Imagem não pertence a esta notícia" });
+    }
+
+    if (imagem.url) {
+      await removerArquivoDoSupabase(imagem.url);
+    }
+
+    await prisma.noticiaImagem.delete({
+      where: { id: imagemId },
+    });
+
+    res.json({ ok: true });
+  } catch (error) {
+    console.error("Erro ao excluir imagem da galeria:", error);
+    res.status(500).json({ error: "Erro ao excluir imagem da galeria" });
+  }
+};
+
 // DELETE /noticias/:id — exclui
 export const deleteNoticia = async (req, res) => {
   try {
@@ -260,12 +291,10 @@ export const deleteNoticia = async (req, res) => {
       return res.status(404).json({ error: "Notícia não encontrada" });
     }
 
-    // remove imagem principal
     if (noticia.imagem) {
       await removerArquivoDoSupabase(noticia.imagem);
     }
 
-    // remove imagens da galeria
     if (noticia.galeria?.length) {
       for (const img of noticia.galeria) {
         await removerArquivoDoSupabase(img.url);

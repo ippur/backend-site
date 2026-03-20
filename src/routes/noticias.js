@@ -7,11 +7,10 @@ import {
   postNoticia,
   putNoticia,
   deleteNoticia,
+  deleteImagemGaleriaNoticia,
 } from "../controllers/noticiaController.js";
 
 const router = express.Router();
-
-console.log("=== ROTA NOTICIAS COM upload.fields ATIVA ===");
 
 const uploadNoticias = upload.fields([
   { name: "imagem", maxCount: 1 },
@@ -23,5 +22,6 @@ router.get("/:id", getNoticia);
 router.post("/", auth, uploadNoticias, postNoticia);
 router.put("/:id", auth, uploadNoticias, putNoticia);
 router.delete("/:id", auth, deleteNoticia);
+router.delete("/:id/galeria/:imagemId", auth, deleteImagemGaleriaNoticia);
 
 export default router;

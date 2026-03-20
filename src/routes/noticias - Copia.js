@@ -2,15 +2,26 @@ import express from "express";
 import upload from "../utils/upload.js";
 import { auth } from "../middleware/auth.js";
 import {
-  getNoticias, getNoticia, postNoticia, putNoticia, deleteNoticia
+  getNoticias,
+  getNoticia,
+  postNoticia,
+  putNoticia,
+  deleteNoticia,
 } from "../controllers/noticiaController.js";
 
 const router = express.Router();
 
+console.log("=== ROTA NOTICIAS COM upload.fields ATIVA ===");
+
+const uploadNoticias = upload.fields([
+  { name: "imagem", maxCount: 1 },
+  { name: "galeria", maxCount: 10 },
+]);
+
 router.get("/", getNoticias);
 router.get("/:id", getNoticia);
-router.post("/", auth, upload.single("imagem"), postNoticia);
-router.put("/:id", auth, upload.single("imagem"), putNoticia);
+router.post("/", auth, uploadNoticias, postNoticia);
+router.put("/:id", auth, uploadNoticias, putNoticia);
 router.delete("/:id", auth, deleteNoticia);
 
 export default router;
