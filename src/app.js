@@ -2,11 +2,11 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
+
 import noticiaRoutes from "./routes/noticias.js";
 import transparenciaRoutes from "./routes/transparencia/index.js";
 import usuarioRoutes from "./routes/usuarios.js";
-//import licitacaoRoutes from "./routes/licitacoes.js";
-//import transparenciaRoutes from "./routes/transparencia.js";
+import contatoRoutes from "./routes/contato.js";
 
 const app = express();
 
@@ -23,6 +23,7 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 app.use("/api/noticias", noticiaRoutes);
 app.use("/api/transparencia", transparenciaRoutes);
 app.use("/api/usuarios", usuarioRoutes);
+app.use("/api/contato", contatoRoutes);
 
 // Health check
 app.get("/", (req, res) => res.send("API IPPUR - Online 🚀"));
