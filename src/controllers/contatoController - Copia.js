@@ -1,6 +1,17 @@
-import { Resend } from "resend";
+import dns from "dns";
+import nodemailer from "nodemailer";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+dns.setDefaultResultOrder("ipv4first");
+
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST,
+  port: Number(process.env.EMAIL_PORT),
+  secure: process.env.EMAIL_SECURE === "true",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 export async function enviarContato(req, res) {
   try {
@@ -17,14 +28,15 @@ export async function enviarContato(req, res) {
     if (req.file) {
       attachments.push({
         filename: req.file.originalname,
-        content: req.file.buffer.toString("base64"),
+        content: req.file.buffer,
+        contentType: req.file.mimetype,
       });
     }
 
-    await resend.emails.send({
-      from: `IPPUR <${process.env.EMAIL_FROM}>`,
+    await transporter.sendMail({
+      from: `"Site IPPUR" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_TO,
-      reply_to: email,
+      replyTo: email,
       subject: `Contato pelo site: ${assunto}`,
       html: `
         <h2>Nova mensagem enviada pelo formulário do site</h2>
