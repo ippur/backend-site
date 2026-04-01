@@ -98,7 +98,7 @@ export const postTransparencia = async (req, res) => {
     const novoDoc = await prisma.documentoTransparencia.create({
       data: {
         titulo,
-        tipo,
+        tipo: tipo?.toLowerCase(),
         data: new Date(data),
         comentarios,
         arquivo,
@@ -128,7 +128,7 @@ export const putTransparencia = async (req, res) => {
       where: { id },
       data: {
         titulo,
-        tipo,
+        tipo: tipo?.trim().toLowerCase(),
         data: new Date(data),
         comentarios,
         ...(arquivo ? { arquivo } : {}),
