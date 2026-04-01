@@ -1,0 +1,7 @@
+echo "node_modules
+.env
+uploads
+.DS_Store
+*.log
+.prisma
+" > .gitignore

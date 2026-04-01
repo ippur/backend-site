@@ -1,7 +1,40 @@
-echo "node_modules
+# Dependências
+node_modules/
+
+# Variáveis de ambiente
 .env
-uploads
-.DS_Store
+.env.*
+!.env.example
+
+# Logs
 *.log
-.prisma
-" > .gitignore
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Uploads locais (caso use)
+uploads/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Build / dist
+dist/
+build/
+
+# Prisma (opcional ignorar apenas cache)
+.prisma/
+
+# Arquivos temporários
+.tmp/
+temp/
+
+# IDEs
+.vscode/
+.idea/
+
+# Arquivos de backup
+*~
+*.bak
+*.swp
